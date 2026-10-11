@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#5B45E0">
+<title>สรุปรายรับ–รายจ่าย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F2FC; --card:#FFFFFF; --ink:#231F40; --muted:#5F5A7A; --faint:#8C87A6; --line:#E3DFF5; --grid:#EEECF6;
+    --accent:#5B45E0; --accent-dark:#4532C2; --soft:#EEEBFB;
+    --income:#0B7A3E; --expense:#C5221F; --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Prompt',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 56px}
+  .top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .logo{width:48px;height:48px;border-radius:14px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
+  .top .titles{flex:1;min-width:220px}
+  h1{font-size:26px;line-height:1.25;margin:0}
+  .updated{margin:2px 0 0;color:var(--muted);font-size:14px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--accent-dark);font:inherit;font-size:15px;font-weight:500;text-decoration:none;cursor:pointer}
+  .btn:hover{border-color:#C9C1F1}
+  .btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-dark)}
+
+  .banner{margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF4D6;color:#6B4E00;font-size:14px;line-height:1.5}
+  .banner.err{background:#FCE8E6;color:#8C1D18}
+  .banner code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:6px}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+  .kpi .label{font-size:14px;color:var(--muted)}
+  .kpi .value{font-size:28px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .kpi.hero{background:var(--accent);border-color:var(--accent);color:#fff}
+  .kpi.hero .label{color:#fff;opacity:.9}
+  .kpi .mark{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:1px}
+
+  .grid2{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}
+  .grid2 > .card{flex:1 1 440px;min-width:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-top:16px}
+  .grid2 > .card{margin-top:0}
+  .card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+  .card h2{font-size:17px;margin:0}
+  .legend{display:flex;gap:14px;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .empty{color:var(--muted);font-size:14px;margin:8px 0}
+
+  /* daily chart */
+  .daily{position:relative;height:240px;padding-left:64px}
+  .daily .gl{position:absolute;left:64px;right:0;height:1px;background:var(--grid)}
+  .daily .gl.base{background:#CFCBE0}
+  .daily .yl{position:absolute;left:0;width:56px;text-align:right;font-size:12px;color:var(--faint);transform:translateY(-50%);font-variant-numeric:tabular-nums}
+  .daily .cols{position:absolute;left:64px;right:0;top:0;bottom:28px;display:flex;align-items:flex-end;gap:6px}
+  .daily .col{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px;position:relative;border-radius:6px;outline:none;cursor:default}
+  .daily .col:hover, .daily .col:focus-visible{background:rgba(91,69,224,.06)}
+  .daily .col:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+  .daily .bar{width:min(18px,42%);border-radius:4px 4px 0 0;min-height:0}
+  .daily .bar.in{background:var(--income)}
+  .daily .bar.out{background:var(--expense)}
+  .daily .xl{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--faint);white-space:nowrap}
+
+  /* category bars */
+  .seg{display:inline-grid;grid-auto-flow:column;gap:4px;background:var(--soft);border-radius:12px;padding:4px}
+  .seg button{min-height:36px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:var(--muted);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(35,31,64,.12)}
+  .seg button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+  .cats{display:flex;flex-direction:column;gap:12px}
+  .cat-row{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:12px}
+  .cat-row .name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat-row .track{height:14px;border-radius:0 4px 4px 0;background:transparent;position:relative}
+  .cat-row .fill{height:100%;border-radius:0 4px 4px 0;background:var(--accent)}
+  .cat-row .val{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cat-row .pct{color:var(--muted);margin-left:6px}
+
+  /* tables */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px;min-width:520px}
+  th, td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:13px;font-weight:500;color:var(--muted)}
+  td.num, th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:0}
+  .rank{color:var(--faint);width:36px}
+  .tag{display:inline-block;font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px}
+  .tag.in{background:#E3F4EA;color:var(--income)}
+  .tag.out{background:#FCE8E6;color:var(--expense)}
+
+  .tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.6;box-shadow:0 6px 20px rgba(35,31,64,.25);opacity:0;transition:opacity .1s}
+  .tip.show{opacity:1}
+  .tip .sw{margin-right:6px;vertical-align:-1px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (max-width:560px){
+    h1{font-size:22px}
+    .kpi .value{font-size:22px}
+    .daily{padding-left:52px}
+    .daily .gl, .daily .cols{left:52px}
+    .daily .yl{width:46px}
+    .cat-row{grid-template-columns:72px 1fr auto}
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <div class="logo" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+    </div>
+    <div class="titles">
+      <h1>สรุปรายรับ–รายจ่าย</h1>
+      <p class="updated" id="updated">กำลังโหลดข้อมูล…</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="refresh">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+        รีเฟรช
+      </button>
+      <a class="btn primary" href="./">+ บันทึกรายการ</a>
+    </div>
+  </div>
+
+  <div class="banner" id="setupBanner" hidden>
+    ยังไม่ได้ตั้งค่า API: เปิดไฟล์ <code>summary.html</code> แล้วใส่ลิงก์เว็บแอปจาก Apps Script ที่ตัวแปร <code>API_URL</code> (ลิงก์เดียวกับใน index.html)
+  </div>
+  <div class="banner err" id="errBanner" hidden></div>
+
+  <section class="kpis" aria-label="ยอดรวม">
+    <div class="kpi hero"><div class="label">เงินคงเหลือรวม</div><div class="value" id="kBalance">–</div></div>
+    <div class="kpi"><div class="label"><span class="mark" style="background:var(--income)"></span>รายรับรวม</div><div class="value" id="kIncome">–</div></div>
+    <div class="kpi"><div class="label"><span class="mark" style="background:var(--expense)"></span>รายจ่ายรวม</div><div class="value" id="kExpense">–</div></div>
+    <div class="kpi"><div class="label">จำนวนรายการ</div><div class="value" id="kCount">–</div></div>
+    <div class="kpi"><div class="label">ผู้บันทึก</div><div class="value" id="kPeople">–</div></div>
+  </section>
+
+  <div class="grid2" style="margin-top:16px">
+    <section class="card">
+      <div class="card-head">
+        <h2>รายรับ–รายจ่ายรายวัน</h2>
+        <div class="legend" aria-hidden="true">
+          <span><i class="sw" style="background:var(--income)"></i>รายรับ</span>
+          <span><i class="sw" style="background:var(--expense)"></i>รายจ่าย</span>
+        </div>
+      </div>
+      <div class="daily" id="daily" role="group" aria-label="กราฟรายรับและรายจ่ายรายวัน 14 วันล่าสุด"></div>
+      <p class="empty" id="dailyEmpty" hidden>ยังไม่มีข้อมูล</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>แยกตามหมวดหมู่</h2>
+        <div class="seg" role="group" aria-label="เลือกประเภท">
+          <button type="button" data-type="รายจ่าย" aria-pressed="true">รายจ่าย</button>
+          <button type="button" data-type="รายรับ" aria-pressed="false">รายรับ</button>
+        </div>
+      </div>
+      <div class="cats" id="cats"></div>
+      <p class="empty" id="catsEmpty" hidden>ยังไม่มีข้อมูล</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2>ยอดรายคน</h2><span class="updated">เรียงตามเงินคงเหลือ</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th class="rank">#</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th class="num">รายรับ</th><th class="num">รายจ่าย</th><th class="num">คงเหลือ</th><th class="num">รายการ</th></tr></thead>
+        <tbody id="people"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="peopleEmpty" hidden>ยังไม่มีข้อมูล</p>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>รายการล่าสุด</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>วันที่</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>ประเภท</th><th>หมวดหมู่</th><th>รายการ</th><th class="num">จำนวนเงิน</th></tr></thead>
+        <tbody id="recent"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="recentEmpty" hidden>ยังไม่มีข้อมูล</p>
+  </section>
+</main>
+<div class="tip" id="tip" role="presentation"></div>
+
+<script>
+  // ===== ใส่ลิงก์เว็บแอปจาก Apps Script (ลิงก์เดียวกับใน index.html) =====
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwG3edHMnJxlbOI7j3BYZQ0P_BvylziiYriSHLSTl8Zg_xbk40xO0PmJ-xT-eXq9e7s/exec';
+  const REFRESH_MS = 30000;
+
+  const $ = (id) => document.getElementById(id);
+  const configured = /^https:\/\/script\.google\.com\/.+\/exec$/.test(API_URL);
+  const money = (n) => (n < 0 ? '−' : '') + '฿' + Math.abs(Number(n || 0)).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const short = (n) => {
+    const a = Math.abs(n);
+    if (a >= 1e6) return '฿' + (n / 1e6).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'M';
+    if (a >= 1e3) return '฿' + (n / 1e3).toLocaleString('th-TH', { maximumFractionDigits: 1 }) + 'K';
+    return '฿' + Math.round(n).toLocaleString('th-TH');
+  };
+  const ddmm = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? Number(m[3]) + '/' + Number(m[2]) : s; };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  let data = null;
+  let catType = 'รายจ่าย';
+
+  /* ---------- tooltip ---------- */
+  const tip = $('tip');
+  function showTip(target, rows) {
+    tip.textContent = '';
+    rows.forEach((r, i) => {
+      const line = el('div');
+      if (r.color) { const s = el('i', 'sw'); s.style.background = r.color; line.append(s); }
+      line.append(document.createTextNode(r.text));
+      if (i === 0) line.style.fontWeight = '600';
+      tip.append(line);
+    });
+    const b = target.getBoundingClientRect();
+    tip.classList.add('show');
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = b.left + b.width / 2 - tw / 2;
+    x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+    let y = b.top - th - 8;
+    if (y < 8) y = b.bottom + 8;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+  function hideTip() { tip.classList.remove('show'); }
+
+  /* ---------- nice axis ---------- */
+  function niceMax(v) {
+    if (v <= 0) return 100;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    const n = v / p;
+    const step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+    return step * p;
+  }
+
+  /* ---------- renderers ---------- */
+  function renderKpis(d) {
+    $('kBalance').textContent = money(d.balance);
+    $('kIncome').textContent = money(d.income);
+    $('kExpense').textContent = money(d.expense);
+    $('kCount').textContent = d.count.toLocaleString('th-TH');
+    $('kPeople').textContent = d.people.length.toLocaleString('th-TH') + ' คน';
+  }
+
+  function renderDaily(days) {
+    const box = $('daily');
+    box.textContent = '';
+    $('dailyEmpty').hidden = days.length > 0;
+    box.hidden = days.length === 0;
+    if (!days.length) return;
+
+    const max = niceMax(Math.max(...days.map((d) => Math.max(d.income, d.expense))));
+    const plotH = 240 - 28;
+    [0, 0.5, 1].forEach((f) => {
+      const y = plotH - f * plotH;
+      const gl = el('div', 'gl' + (f === 0 ? ' base' : ''));
+      gl.style.top = y + 'px';
+      const yl = el('div', 'yl', short(max * f));
+      yl.style.top = y + 'px';
+      box.append(gl, yl);
+    });
+
+    const cols = el('div', 'cols');
+    const maxLabels = box.clientWidth < 480 ? 5 : 8;
+    const step = Math.max(1, Math.ceil(days.length / maxLabels));
+    days.forEach((d, i) => {
+      const col = el('div', 'col');
+      col.tabIndex = 0;
+      col.setAttribute('aria-label', ddmm(d.date) + ' รายรับ ' + money(d.income) + ' รายจ่าย ' + money(d.expense));
+      const bin = el('div', 'bar in'); bin.style.height = (d.income / max * 100) + '%';
+      const bout = el('div', 'bar out'); bout.style.height = (d.expense / max * 100) + '%';
+      col.append(bin, bout);
+      if ((days.length - 1 - i) % step === 0) col.append(el('div', 'xl', ddmm(d.date)));
+      const rows = [
+        { text: 'วันที่ ' + ddmm(d.date) },
+        { text: 'รายรับ ' + money(d.income), color: 'var(--income)' },
+        { text: 'รายจ่าย ' + money(d.expense), color: 'var(--expense)' },
+        { text: 'สุทธิ ' + money(d.income - d.expense) }
+      ];
+      col.addEventListener('mouseenter', () => showTip(col, rows));
+      col.addEventListener('focus', () => showTip(col, rows));
+      col.addEventListener('mouseleave', hideTip);
+      col.addEventListener('blur', hideTip);
+      cols.append(col);
+    });
+    box.append(cols);
+  }
+
+  function renderCats(all) {
+    const box = $('cats');
+    box.textContent = '';
+    const list = all.filter((c) => c.type === catType);
+    $('catsEmpty').hidden = list.length > 0;
+    if (!list.length) return;
+    const total = list.reduce((s, c) => s + c.amount, 0);
+    const max = list[0].amount || 1;
+    list.forEach((c) => {
+      const row = el('div', 'cat-row');
+      const name = el('div', 'name', c.category);
+      name.title = c.category;
+      const track = el('div', 'track');
+      const fill = el('div', 'fill');
+      fill.style.width = Math.max(1, c.amount / max * 100) + '%';
+      track.append(fill);
+      const val = el('div', 'val', money(c.amount));
+      val.append(el('span', 'pct', Math.round(c.amount / total * 100) + '%'));
+      row.append(name, track, val);
+      box.append(row);
+    });
+  }
+
+  function renderPeople(people) {
+    const tb = $('people');
+    tb.textContent = '';
+    $('peopleEmpty').hidden = people.length > 0;
+    people.forEach((p, i) => {
+      const tr = el('tr');
+      tr.append(
+        el('td', 'rank', String(i + 1)),
+        el('td', '', p.name),
+        el('td', '', p.room || '–'),
+        el('td', 'num', money(p.income)),
+        el('td', 'num', money(p.expense)),
+        el('td', 'num', money(p.balance)),
+        el('td', 'num', String(p.count))
+      );
+      tr.lastChild.previousSibling.style.fontWeight = '600';
+      tb.append(tr);
+    });
+  }
+
+  function renderRecent(rows) {
+    const tb = $('recent');
+    tb.textContent = '';
+    $('recentEmpty').hidden = rows.length > 0;
+    rows.forEach((r) => {
+      const isIn = r.type === 'รายรับ';
+      const tr = el('tr');
+      const typeTd = el('td');
+      typeTd.append(el('span', 'tag ' + (isIn ? 'in' : 'out'), (isIn ? '+ ' : '− ') + r.type));
+      tr.append(
+        el('td', '', ddmm(r.date)),
+        el('td', '', r.name),
+        el('td', '', r.room || '–'),
+        typeTd,
+        el('td', '', r.category),
+        el('td', '', r.item),
+        el('td', 'num', (isIn ? '+' : '−') + money(r.amount))
+      );
+      tb.append(tr);
+    });
+  }
+
+  function render(d) {
+    data = d;
+    renderKpis(d);
+    renderDaily(d.days);
+    renderCats(d.categories);
+    renderPeople(d.people);
+    renderRecent(d.recent);
+    $('updated').textContent = 'อัปเดตล่าสุด ' + d.updated.slice(11, 16) + ' น. · รีเฟรชอัตโนมัติทุก 30 วินาที';
+  }
+
+  async function load() {
+    if (!configured) {
+      $('setupBanner').hidden = false;
+      $('updated').textContent = 'ยังไม่ได้เชื่อมต่อข้อมูล';
+      return;
+    }
+    try {
+      const res = await fetch(API_URL + '?view=dashboard');
+      const json = await res.json();
+      if (!json.ok || !json.dashboard) throw new Error(json.error || 'โหลดข้อมูลไม่สำเร็จ (ตรวจว่า Deploy Code.gs เวอร์ชันใหม่แล้ว)');
+      $('errBanner').hidden = true;
+      render(json.dashboard);
+    } catch (e) {
+      $('errBanner').hidden = false;
+      $('errBanner').textContent = e.message === 'Failed to fetch' ? 'เชื่อมต่อระบบไม่ได้ ลองกดรีเฟรชอีกครั้ง' : e.message;
+    }
+  }
+
+  /* ---------- events ---------- */
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+    catType = b.dataset.type;
+    document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    if (data) renderCats(data.categories);
+  }));
+  $('refresh').addEventListener('click', load);
+  window.addEventListener('scroll', hideTip, { passive: true });
+  setInterval(() => { if (document.visibilityState === 'visible') load(); }, REFRESH_MS);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') load(); });
+
+  load();
+</script>
+</body>
+</html>

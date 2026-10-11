@@ -50,6 +50,12 @@
   .amount-wrap input{padding-right:44px;font-size:20px;font-weight:600}
   .amount-wrap span{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
 
+  .who-box{background:#FBFAFF;border:1px solid var(--line);border-radius:14px;padding:14px}
+  .who-title{font-size:14px;font-weight:600;margin-bottom:10px}
+  .who-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:10px}
+  .who-grid label{display:block;font-size:13px;font-weight:500;margin-bottom:4px;color:var(--muted)}
+  .field-gap{height:16px}
+  @media (max-width:340px){.who-grid{grid-template-columns:1fr}}
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--soft);border-radius:14px;padding:4px}
   .seg input, .chips input{position:absolute;opacity:0;width:1px;height:1px}
   .seg label{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:11px;font-weight:600;color:var(--muted);cursor:pointer}
@@ -113,7 +119,7 @@
   <section class="balance" aria-live="polite">
     <div class="label">เงินคงเหลือ</div>
     <div class="value" id="balance">฿0.00</div>
-    <div class="who" id="who">กรอกชื่อด้านล่างเพื่อดูยอดของคุณ</div>
+    <div class="who" id="who">กรอกชื่อและห้องเรียนด้านล่างเพื่อดูยอดของคุณ</div>
   </section>
   <div class="stats">
     <div class="stat in"><div class="label">รายรับรวม</div><div class="value" id="income">฿0.00</div></div>
@@ -122,6 +128,22 @@
 
   <form class="card" id="form" novalidate>
     <h2>เพิ่มรายการ</h2>
+
+    <div class="who-box">
+      <div class="who-title">ผู้บันทึก <span class="hint">· กรอกครั้งแรกครั้งเดียว เครื่องจะจำไว้</span></div>
+      <div class="who-grid">
+        <div>
+          <label for="name">ชื่อ-นามสกุล</label>
+          <input type="text" id="name" maxlength="60" autocomplete="name" placeholder="เช่น สมชาย ใจดี" required>
+        </div>
+        <div>
+          <label for="room">ห้องเรียน</label>
+          <input type="text" id="room" maxlength="30" placeholder="เช่น ม.5/2" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-gap"></div>
 
     <div class="seg" role="radiogroup" aria-label="ประเภทรายการ">
       <input type="radio" name="type" id="t-in" value="รายรับ">
@@ -151,11 +173,6 @@
     <div class="field">
       <label for="date">วันที่</label>
       <input type="date" id="date" required>
-    </div>
-
-    <div class="field">
-      <label for="name">ชื่อผู้บันทึก <span class="hint">(จำไว้ในเครื่องนี้)</span></label>
-      <input type="text" id="name" maxlength="60" autocomplete="name" placeholder="ชื่อเล่น หรือ ชื่อ-นามสกุล" required>
     </div>
 
     <div class="field">
@@ -237,7 +254,9 @@
     $('balance').textContent = money(s.balance);
     $('income').textContent = money(s.income);
     $('expense').textContent = money(s.expense);
-    $('who').textContent = s.name ? 'ของ ' + s.name + ' · ' + s.count + ' รายการ' : 'ยอดรวมทั้งหมด';
+    $('who').textContent = s.name
+      ? 'ของ ' + s.name + (s.room ? ' (' + s.room + ')' : '') + ' · ' + s.count + ' รายการ'
+      : 'กรอกชื่อและห้องเรียนด้านล่างเพื่อดูยอดของคุณ';
 
     const list = $('recent');
     list.textContent = '';
@@ -273,8 +292,10 @@
   async function loadSummary() {
     if (!configured) return;
     const name = $('name').value.trim();
+    const room = $('room').value.trim();
+    if (!name || !room) return; // ยังไม่รู้ว่าเป็นใคร: ไม่ต้องดึงยอด
     try {
-      const res = await fetch(API_URL + '?name=' + encodeURIComponent(name));
+      const res = await fetch(API_URL + '?name=' + encodeURIComponent(name) + '&room=' + encodeURIComponent(room));
       const data = await res.json();
       if (data.ok) renderSummary(data.summary);
       else setStatus(data.error || 'โหลดข้อมูลไม่สำเร็จ', 'err');
@@ -329,23 +350,25 @@
   });
   $('removeReceipt').addEventListener('click', clearReceipt);
 
-  $('name').addEventListener('change', () => {
-    store.set('ie_name', $('name').value.trim());
+  ['name', 'room'].forEach((id) => $(id).addEventListener('change', () => {
+    store.set('ie_' + id, $(id).value.trim());
     loadSummary();
-  });
+  }));
   $('refresh').addEventListener('click', loadSummary);
 
   $('form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = $('name').value.trim();
+    const room = $('room').value.trim();
     const item = $('item').value.trim();
     const amount = parseFloat($('amount').value);
     const catEl = document.querySelector('input[name="category"]:checked');
 
     if (!configured) return setStatus('ยังไม่ได้ใส่ API_URL ในไฟล์ index.html', 'err');
+    if (!name) { $('name').focus(); return setStatus('กรุณากรอกชื่อ-นามสกุล', 'err'); }
+    if (!room) { $('room').focus(); return setStatus('กรุณากรอกห้องเรียน', 'err'); }
     if (!(amount > 0)) { $('amount').focus(); return setStatus('กรุณากรอกจำนวนเงินมากกว่า 0', 'err'); }
     if (!item) { $('item').focus(); return setStatus('กรุณากรอกรายการ', 'err'); }
-    if (!name) { $('name').focus(); return setStatus('กรุณากรอกชื่อผู้บันทึก', 'err'); }
 
     const btn = $('submit');
     btn.disabled = true;
@@ -353,7 +376,7 @@
     setStatus('');
 
     const payload = {
-      name, item, amount,
+      name, room, item, amount,
       type: currentType(),
       category: catEl ? catEl.value : '',
       date: $('date').value || today(),
@@ -370,6 +393,7 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
       store.set('ie_name', name);
+      store.set('ie_room', room);
       renderSummary(data.summary);
       $('item').value = '';
       $('amount').value = '';
@@ -386,6 +410,7 @@
   // ----- start -----
   $('date').value = today();
   $('name').value = store.get('ie_name');
+  $('room').value = store.get('ie_room');
   $('setupBanner').hidden = configured;
   renderChips();
   loadSummary();
