@@ -22,6 +22,10 @@
   header h1{font-size:22px;line-height:1.25;margin:0}
   header p{margin:2px 0 0;color:var(--muted);font-size:14px}
 
+  .sum-link{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--accent-dark);font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+  .sum-link:hover{border-color:#C9C1F1}
+  .sum-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  @media (max-width:420px){header h1{font-size:19px} header p{font-size:13px} .sum-link{padding:0 12px}}
   .banner{margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF4D6;color:#6B4E00;font-size:14px;line-height:1.5}
   .banner code{background:#FFE7A3;padding:1px 6px;border-radius:6px}
 
@@ -110,6 +114,10 @@
       <h1>บันทึกรายรับ–รายจ่าย</h1>
       <p>กรอกแล้วระบบคำนวณเงินคงเหลือให้ทันที</p>
     </div>
+    <a class="sum-link" href="summary.html">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+      ดูสรุป
+    </a>
   </header>
 
   <div class="banner" id="setupBanner" hidden>
